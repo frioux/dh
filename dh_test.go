@@ -36,7 +36,7 @@ func TestDH(t *testing.T) {
 	if err := tx.Commit(); err != nil {
 		panic(err)
 	}
-	if err := (dh.MigrationStorage{}).StoreVersion(db, dh.Version{"001"}); err != nil {
+	if err := (dh.MigrationStorage{}).StoreVersion(db, dh.StorageVersion{"001"}); err != nil {
 		panic(err)
 	}
 	fmt.Println(dh.MigrationStorage{}.CurrentVersion(db))
