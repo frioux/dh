@@ -1,5 +1,6 @@
-CREATE TABLE dh_migrations (
+CREATE TABLE frew (
         "id",
         "version",
         "sql"
 );
+
