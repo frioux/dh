@@ -5,9 +5,11 @@ import (
 	"database/sql"
 	"embed"
 	"io/fs"
+	"fmt"
 
 	"github.com/frioux/dh"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/jmoiron/sqlx"
 )
 
 //go:embed testdata/simple/*
@@ -19,6 +21,8 @@ func TestDH(t *testing.T) {
 		panic(err)
 	}
 
+	db := sqlx.NewDb(dbh, "sqlite3")
+	fmt.Println(dh.MigrationStorage{}.CurrentVersion(db))
 	e := dh.ExtensionMigrator{}
 	tx, err := dbh.Begin()
 	if err != nil {
@@ -32,4 +36,8 @@ func TestDH(t *testing.T) {
 	if err := tx.Commit(); err != nil {
 		panic(err)
 	}
+	if err := (dh.MigrationStorage{}).StoreVersion(db, dh.Version{"001"}); err != nil {
+		panic(err)
+	}
+	fmt.Println(dh.MigrationStorage{}.CurrentVersion(db))
 }
