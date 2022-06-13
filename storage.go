@@ -1,10 +1,27 @@
 package dh
 
 import (
+	"embed"
 	"fmt"
+	"io/fs"
 
 	"github.com/jmoiron/sqlx"
 )
+
+
+//go:embed sql
+var dhMigrations embed.FS
+
+var DHMigrations fs.FS
+
+func init() {
+	var err error
+	DHMigrations, err = fs.Sub(dhMigrations, "sql")
+	if err != nil {
+		panic(err)
+	}
+}
+
 
 type StorageVersion struct {
 	Version string

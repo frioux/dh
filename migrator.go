@@ -11,16 +11,19 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type Migrator interface {
-	Migrate(sql.Tx, fs.File) error
+type DoesMigrate interface {
+	Migrate(*sql.Tx, fs.File) error
 }
 
-type ExtensionMigrator struct{
+type Migrator struct {
 	ms MigrationStorage
 	p Plan
+	m DoesMigrate
 }
 
-func (m ExtensionMigrator) MigrateOne(dbh *sqlx.DB, d fs.FS, version string) error {
+func NewMigrator(m DoesMigrate) Migrator { return Migrator{m: m} }
+
+func (m Migrator) MigrateOne(dbh *sqlx.DB, d fs.FS, version string) error {
 	tx, err := dbh.Begin()
 	if err != nil {
 		return fmt.Errorf("dbh.Begin: %w", err)
@@ -42,7 +45,7 @@ func (m ExtensionMigrator) MigrateOne(dbh *sqlx.DB, d fs.FS, version string) err
 	return nil
 }
 
-func (m ExtensionMigrator) MigrateAll(dbh *sqlx.DB, d fs.FS) error {
+func (m Migrator) MigrateAll(dbh *sqlx.DB, d fs.FS) error {
 	cv, err := m.ms.CurrentVersion(dbh)
 	if err != nil {
 		return err
@@ -80,7 +83,7 @@ func (m ExtensionMigrator) MigrateAll(dbh *sqlx.DB, d fs.FS) error {
 	return nil
 }
 
-func (m ExtensionMigrator) MigrateDir(dbh *sql.Tx, d fs.FS) error {
+func (m Migrator) MigrateDir(dbh *sql.Tx, d fs.FS) error {
 	des, err := fs.ReadDir(d, ".")
 	if err != nil {
 		return fmt.Errorf("fs.ReadDir: %w", err)
@@ -93,11 +96,16 @@ func (m ExtensionMigrator) MigrateDir(dbh *sql.Tx, d fs.FS) error {
 			return fmt.Errorf("fs.Open: %w", err)
 		}
 		defer f.Close()
-		if err := m.Migrate(dbh, f); err != nil {
+		if err := m.m.Migrate(dbh, f); err != nil {
 			return fmt.Errorf("m.Migrate: %w", err)
 		}
 	}
 	return nil
+}
+
+type ExtensionMigrator struct{
+	ms MigrationStorage
+	p Plan
 }
 
 func (m ExtensionMigrator) Migrate(dbh *sql.Tx, f fs.File) error {
