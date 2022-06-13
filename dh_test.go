@@ -1,14 +1,14 @@
 package dh_test
 
 import (
-	"testing"
 	"database/sql"
 	"embed"
 	"io/fs"
+	"testing"
 
 	"github.com/frioux/dh"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func mustSub(fss fs.FS, dir string) fs.FS {

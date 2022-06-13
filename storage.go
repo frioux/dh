@@ -8,7 +8,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-
 //go:embed sql
 var dhMigrations embed.FS
 
@@ -22,16 +21,12 @@ func init() {
 	}
 }
 
-
-type StorageVersion struct {
-	Version string
+type DoesMigrationStorage interface {
+	StoreVersion(sqlx.Execer, string) error
+	CurrentVersion(sqlx.Ext) (string, error)
 }
 
-func (v StorageVersion) String() string {
-	return v.Version
-}
-
-type MigrationStorage struct {}
+type MigrationStorage struct{}
 
 func (s MigrationStorage) StoreVersion(dbh sqlx.Execer, v string) error {
 	_, err := dbh.Exec("INSERT INTO dh_migrations (version) VALUES (?)", v)
@@ -39,11 +34,10 @@ func (s MigrationStorage) StoreVersion(dbh sqlx.Execer, v string) error {
 }
 
 func (s MigrationStorage) CurrentVersion(dbh sqlx.Ext) (string, error) {
-	var found StorageVersion
+	var found struct{ Version string }
 	if err := sqlx.Get(dbh, &found, "SELECT version FROM dh_migrations ORDER BY id DESC LIMIT 1"); err != nil {
 		return "", fmt.Errorf("dbh.Select: %w", err)
 	}
 
 	return found.Version, nil
 }
-

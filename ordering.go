@@ -1,13 +1,13 @@
 package dh
 
 import (
-	"io"
 	"bufio"
+	"io"
 	"io/fs"
 	"strings"
 )
 
-type Plan struct { }
+type Plan struct{}
 
 func (p Plan) Parse(r io.Reader) ([]string, error) {
 	s := bufio.NewScanner(r)
@@ -15,8 +15,8 @@ func (p Plan) Parse(r io.Reader) ([]string, error) {
 	for s.Scan() {
 		t := s.Text()
 		t, _, _ = strings.Cut(t, "#") // remove comments
-		t = strings.TrimSpace(t) // remove whitespace
-		if t == "" { // skip blank lines
+		t = strings.TrimSpace(t)      // remove whitespace
+		if t == "" {                  // skip blank lines
 			continue
 		}
 		ret = append(ret, t)

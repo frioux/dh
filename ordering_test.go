@@ -1,8 +1,8 @@
 package dh_test
 
 import (
-	"testing"
 	"strings"
+	"testing"
 
 	"github.com/frioux/dh"
 )

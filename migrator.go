@@ -1,12 +1,12 @@
 package dh
 
 import (
-	"fmt"
-	"path/filepath"
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/fs"
-	"database/sql"
+	"path/filepath"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -16,12 +16,17 @@ type DoesMigrate interface {
 }
 
 type Migrator struct {
-	ms MigrationStorage
-	p Plan
-	m DoesMigrate
+	ms DoesMigrationStorage
+	p  Plan
+	m  DoesMigrate
 }
 
-func NewMigrator(m DoesMigrate) Migrator { return Migrator{m: m} }
+func NewMigrator(m DoesMigrate) Migrator {
+	return Migrator{
+		ms: MigrationStorage{},
+		m:  m,
+	}
+}
 
 func (m Migrator) MigrateOne(dbh *sqlx.DB, d fs.FS, version string) error {
 	tx, err := dbh.Begin()
@@ -62,7 +67,7 @@ func (m Migrator) MigrateAll(dbh *sqlx.DB, d fs.FS) error {
 
 	var (
 		planStart int
-		found bool
+		found     bool
 	)
 	for i, plan := range ps {
 		if plan == cv {
@@ -103,9 +108,9 @@ func (m Migrator) MigrateDir(dbh *sql.Tx, d fs.FS) error {
 	return nil
 }
 
-type ExtensionMigrator struct{
+type ExtensionMigrator struct {
 	ms MigrationStorage
-	p Plan
+	p  Plan
 }
 
 func (m ExtensionMigrator) Migrate(dbh *sql.Tx, f fs.File) error {
@@ -115,16 +120,16 @@ func (m ExtensionMigrator) Migrate(dbh *sql.Tx, f fs.File) error {
 	}
 
 	switch e := filepath.Ext(s.Name()); e {
-		case ".sql":
-			return SQLMigrator{}.Migrate(dbh, f)
-		case ".json":
-			return JSONMigrator{}.Migrate(dbh, f)
-		default:
-			return fmt.Errorf("Unknown extension: %s", e)
+	case ".sql":
+		return SQLMigrator{}.Migrate(dbh, f)
+	case ".json":
+		return JSONMigrator{}.Migrate(dbh, f)
+	default:
+		return fmt.Errorf("Unknown extension: %s", e)
 	}
 }
 
-type SQLMigrator struct {}
+type SQLMigrator struct{}
 
 func (m SQLMigrator) Migrate(dbh *sql.Tx, f fs.File) error {
 	b, err := io.ReadAll(f)
@@ -139,7 +144,7 @@ func (m SQLMigrator) Migrate(dbh *sql.Tx, f fs.File) error {
 	return nil
 }
 
-type JSONMigrator struct {}
+type JSONMigrator struct{}
 
 func (m JSONMigrator) Migrate(dbh *sql.Tx, f fs.File) error {
 	b, err := io.ReadAll(f)
