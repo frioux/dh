@@ -11,6 +11,10 @@ import (
 //go:embed sql
 var dhMigrations embed.FS
 
+// DHMigrations is an [fs.FS] containing pre-made migrations for the migration
+// storage.  Currently contains:
+//
+//   - 000-sqlite
 var DHMigrations fs.FS
 
 func init() {
@@ -21,9 +25,14 @@ func init() {
 	}
 }
 
+// DoesMigrationStorage is the interface a type must conform to to be able to
+// be used by dh.
 type DoesMigrationStorage interface {
-	StoreVersion(sqlx.Execer, string) error
-	CurrentVersion(sqlx.Ext) (string, error)
+	// StoreVersion inserts v in db.
+	StoreVersion(db sqlx.Execer, version string) error
+
+	// CurrentVersion returns the version stored in db.
+	CurrentVersion(db sqlx.Ext) (string, error)
 }
 
 type MigrationStorage struct{}

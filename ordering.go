@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+// Plan parses the `plan.txt` file.  It ignores comments (prefixed with `#`) and
+// whitespace.
 type Plan struct{}
 
 func (p Plan) Parse(r io.Reader) ([]string, error) {
