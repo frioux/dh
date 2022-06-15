@@ -80,7 +80,7 @@ type DoesMigrate interface {
 // Migrator is the main type to be used within dh.  It orchestrates the migrations
 // based on the provided plan.
 type Migrator struct {
-	p  Plan
+	p Plan
 
 	DoesMigrationStorage
 	DoesMigrate
@@ -90,10 +90,10 @@ type Migrator struct {
 // [ExtensionMigrator].  Create your own Migrator instace or replace those
 // values if you need to.
 func NewMigrator() Migrator {
-       return Migrator{
-               DoesMigrationStorage: MigrationStorage{},
-	       DoesMigrate: ExtensionMigrator{},
-       }
+	return Migrator{
+		DoesMigrationStorage: MigrationStorage{},
+		DoesMigrate:          ExtensionMigrator{},
+	}
 }
 
 // MigrateOne applies a migration directory from d named version.

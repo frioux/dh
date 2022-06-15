@@ -5,8 +5,8 @@ import (
 	"embed"
 	"io/fs"
 	"math/rand"
-	"testing"
 	"path/filepath"
+	"testing"
 
 	"github.com/frioux/dh"
 	"github.com/jmoiron/sqlx"
@@ -42,7 +42,7 @@ func TestDH(t *testing.T) {
 	}
 }
 
-type exampleGoMigrator struct {}
+type exampleGoMigrator struct{}
 
 func (m exampleGoMigrator) Migrate(db *sql.Tx, f fs.File) error {
 	s, err := f.Stat()
