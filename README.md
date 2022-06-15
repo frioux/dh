@@ -12,16 +12,16 @@ The primary users of this program are expected to be Go programmers, using `dh`
 as a library.  First, create your deployment directory:
 
 ```
-mkdir -p dh/deploy/001
-cat <<EOF > dh/deploy/001/dh.sql
-CREATE TABLE dh_migrations (
+mkdir -p dh/001
+cat <<EOF > dh/001/dh.sql
+CREATE TABLE users (
         "id",
-        "version",
-        "sql"
+        "name",
+        "email"
 );
 EOF
 
-cat <<EOF > dh/deploy/001/shortlinks.sql
+cat <<EOF > dh/001/shortlinks.sql
 CREATE TABLE shortlinks (
         "from",
         "to",
@@ -30,7 +30,7 @@ CREATE TABLE shortlinks (
 );
 EOF
 
-cat <<EOF > dh/deploy/001/history.sql
+cat <<EOF > dh/001/history.sql
 CREATE TABLE IF NOT EXISTS history (
         "from",
         "to",
@@ -40,58 +40,49 @@ CREATE TABLE IF NOT EXISTS history (
 EOF
 ```
 
+Add that directory to your migration plan:
+
+```
+echo 000-sqlite > dh/plan.txt
+echo 001       >> dh/plan.txt
+```
+
 Now let's create a migration to add another column:
 
 ```
-mkdir -p dh/upgrade/002
+mkdir dh/002
 
-cat <<SQL >dh/upgrade/002/shortlinks.sql
+cat <<SQL >dh/002/shortlinks.sql
 ALTER TABLE shortlinks ADD COLUMN "description" NOT NULL DEFAULT ''
 SQL
 
-cat <<SQL > dh/upgrade/002/history.sql
+cat <<SQL > dh/002/history.sql
 ALTER TABLE history ADD COLUMN "description" NOT NULL DEFAULT ''
 SQL
+```
+
+And add it to your plan:
+
+```
+echo 002 >> dh/plan.txt
 ```
 
 And here's how you'd use it:
 
 ```golang
 dbh := sql.Connect(...)
-m := dh.Basic(dh.BasicOptions{
-        Migrations: os.OpenDir("./dh/"),
-        DB: dbh,
-})
-if err := m.Migrate(); err != nil {
+m := dh.NewMigrator()
+if err := m.MigrateOne(dbh, dh.DHMigrations, "000-sqlite"); err != nil {
+        panic(err)
+}
+if err := m.MigrateAll(dbh, os.DirFS("dh")); err != nil {
         return err
 }
 ```
 
-The Basic configuration knows how to read an fs.FS, deploys the maximum
-available `deploy`, and then deploys each version `upgrade` after that.  Each
-stage will be wrapped in a transaction.  You can store statements in a SQL file,
-or a JSON file to clearly separate statements, or you can create a Migrator:
+---
 
-```golang
-type Migrator interface {
-        Name() string
-        Migrate(sqlx.DB) (done bool, err error)
-}
-```
-
-```golang
-m := dh.Basic(dh.BasicOptions{
-        Migrations: os.OpenDir("./dh/"),
-        MigrationEngine: dh.BasicEngine(map[string]dh.Migrator{
-                "hash-passwords.migr": &migr{},
-        }),
-        DB: dbh,
-})
-```
-
-You can then call the migrator by either creating an empty file named `hash-passwords.migr` in
-your upgrade directory, or putting a string like this in a sql file:
-
-```SQL
-MIGRATE hash-passwords.migr;
-```
+Out of the box `dh` can apply SQL or lists of SQL from JSON files, but the
+migration interface is extensible so you could wire up
+[gopher-lua](https://github.com/yuin/gopher-lua) to do more advanced
+migrations.
