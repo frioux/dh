@@ -31,7 +31,7 @@ func TestDH(t *testing.T) {
 	}
 
 	db := sqlx.NewDb(dbh, "sqlite3")
-	e := dh.NewMigrator(dh.ExtensionMigrator{})
+	e := dh.NewMigrator()
 	if err := e.MigrateOne(db, dh.DHMigrations, "000-sqlite"); err != nil {
 		panic(err)
 	}

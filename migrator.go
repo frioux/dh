@@ -79,21 +79,20 @@ type DoesMigrate interface {
 // Migrator is the main type to be used within dh.  It orchestrates the migrations
 // based on the provided plan.
 type Migrator struct {
-	ms DoesMigrationStorage
 	p  Plan
-	m  DoesMigrate
+
+	DoesMigrationStorage
+	DoesMigrate
 }
 
-// NewMigrator returns a Migrator instance with the passed DoesMigrate.  When m
-// is nil m defaults to [ExtensionMigrator].
-func NewMigrator(m DoesMigrate) Migrator {
-	if m == nil {
-		m = ExtensionMigrator{}
-	}
-	return Migrator{
-		ms: MigrationStorage{},
-		m:  m,
-	}
+// NewMigrator returns a Migrator instance with [MigrationStorage] and the
+// [ExtensionMigrator].  Create your own Migrator instace or replace those
+// values if you need to.
+func NewMigrator() Migrator {
+       return Migrator{
+               DoesMigrationStorage: MigrationStorage{},
+	       DoesMigrate: ExtensionMigrator{},
+       }
 }
 
 // MigrateOne applies a migration directory from d named version.
@@ -112,7 +111,7 @@ func (m Migrator) MigrateOne(dbh *sqlx.DB, d fs.FS, version string) error {
 	if err := m.migrateDir(tx, d); err != nil {
 		return fmt.Errorf("m.migrateDir: %w", err)
 	}
-	if err := m.ms.StoreVersion(tx, version); err != nil {
+	if err := m.StoreVersion(tx, version); err != nil {
 		return fmt.Errorf("m.ms.StoreVersion: %w", err)
 	}
 	if err := tx.Commit(); err != nil {
@@ -126,7 +125,7 @@ func (m Migrator) MigrateOne(dbh *sqlx.DB, d fs.FS, version string) error {
 // with the migration after the one most recently applied to the
 // database.
 func (m Migrator) MigrateAll(dbh *sqlx.DB, d fs.FS) error {
-	cv, err := m.ms.CurrentVersion(dbh)
+	cv, err := m.CurrentVersion(dbh)
 	if err != nil {
 		return err
 	}
@@ -176,7 +175,7 @@ func (m Migrator) migrateDir(dbh *sql.Tx, d fs.FS) error {
 			return fmt.Errorf("fs.Open: %w", err)
 		}
 		defer f.Close()
-		if err := m.m.Migrate(dbh, f); err != nil {
+		if err := m.Migrate(dbh, f); err != nil {
 			return fmt.Errorf("m.Migrate: %w", err)
 		}
 	}
