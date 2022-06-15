@@ -70,7 +70,8 @@ import (
 // DoesMigrate are things that can apply migrations to the database.
 //
 // Built in examples include the [JSONMigrator], [SQLMigrator], and the
-// related dispatcher, [ExtensionMigrator].
+// related dispatcher, [ExtensionMigrator].  There's an example of a slightly
+// more complicated migrator in the tests.
 type DoesMigrate interface {
 	// Migrate applies a file to the database within the current transaction.
 	Migrate(*sql.Tx, fs.File) error
